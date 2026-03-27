@@ -1,0 +1,31 @@
+/* popup.js */
+(async () => {
+  const dot      = document.getElementById('status-dot');
+  const statusTx = document.getElementById('status-text');
+  const iceToggle = document.getElementById('ice-toggle');
+
+  // tabs permission is now declared so tab.url will be populated
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const onMap = tab?.url?.includes('map.worldmc.org') ?? false;
+
+  if (onMap) {
+    dot.classList.add('active');
+    statusTx.textContent = 'Active on WorldMC Map ✓';
+  } else {
+    statusTx.textContent = 'Open map.worldmc.org to use';
+  }
+
+  // Load saved toggle state
+  const { iceHighwaysEnabled } = await chrome.storage.local.get(['iceHighwaysEnabled']);
+  if (iceHighwaysEnabled) iceToggle.classList.add('on');
+
+  iceToggle.addEventListener('click', async () => {
+    const nowOn = !iceToggle.classList.contains('on');
+    iceToggle.classList.toggle('on', nowOn);
+    await chrome.storage.local.set({ iceHighwaysEnabled: nowOn });
+
+    if (onMap && tab) {
+      chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE_ICE_HIGHWAYS', enabled: nowOn });
+    }
+  });
+})();

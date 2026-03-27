@@ -1,0 +1,477 @@
+/* ============================================================
+   Scute++ — content.css
+   ============================================================ */
+
+/* ── Injected overlay row inside the Leaflet layer control ── */
+.scute-overlay-row {
+  display: flex !important;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 6px !important;
+  cursor: pointer;
+  font-size: 12px;
+  color: #c8e8ff;
+  background: rgba(0, 0, 0, 0);
+  transition: background 0.15s;
+  white-space: nowrap;
+  border-top: 1px solid rgba(0,180,255,0.12);
+}
+.scute-overlay-row:hover {
+  background: rgba(0, 180, 255, 0.07) !important;
+}
+
+#scute-ice-cb {
+  cursor: pointer;
+  accent-color: #00d4ff;
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+.scute-ice-ico {
+  font-size: 13px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.scute-overlay-name {
+  flex: 1;
+  font-size: 12px;
+  letter-spacing: 0.01em;
+}
+
+/* ── Standalone Scute++ control (fallback if no layer control) ── */
+.scute-ctrl-wrap {
+  background: rgba(8, 18, 40, 0.93) !important;
+  border: 1px solid rgba(0, 180, 255, 0.3) !important;
+  border-radius: 8px !important;
+  padding: 6px 10px !important;
+  backdrop-filter: blur(6px);
+  font-family: 'Segoe UI', Arial, sans-serif;
+  min-width: 160px;
+  color: #c8e8ff;
+  box-shadow: 0 3px 16px rgba(0,100,200,0.2) !important;
+}
+
+.scute-ctrl-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #00d4ff;
+  padding-bottom: 5px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(0,180,255,0.18);
+}
+
+.scute-ctrl-ico {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+}
+
+#scute-spinner {
+  font-size: 11px;
+}
+
+/* ── Popup styles ─────────────────────────────────────────── */
+.scute-popup .leaflet-popup-content-wrapper {
+  background: rgba(8, 18, 40, 0.96) !important;
+  border: 1px solid rgba(0, 180, 255, 0.3) !important;
+  border-radius: 10px !important;
+  color: #c8e8ff !important;
+  box-shadow: 0 4px 24px rgba(0,120,255,0.2) !important;
+  padding: 0 !important;
+  backdrop-filter: blur(8px);
+}
+.scute-popup .leaflet-popup-content {
+  margin: 0 !important;
+  min-width: 170px;
+  max-width: 250px;
+}
+.scute-popup .leaflet-popup-tip {
+  background: rgba(0, 80, 160, 0.85) !important;
+}
+.scute-popup .leaflet-popup-close-button {
+  color: #7ab0cc !important;
+  padding: 4px 6px !important;
+}
+
+.sp {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 12px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.sp-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px 6px;
+  border-left: 3px solid #00cfff;
+  background: rgba(0, 140, 255, 0.07);
+  font-size: 13px;
+  color: #e8f6ff;
+}
+.sp-body {
+  padding: 6px 12px 10px;
+}
+.sp-row {
+  margin: 2px 0;
+  color: #d0ecff;
+}
+.sp-muted {
+  color: #7ab0cc;
+  font-size: 11px;
+}
+.sp-jct {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  background: rgba(255,200,0,0.15);
+  color: #ffd700;
+  border: 1px solid rgba(255,200,0,0.35);
+  border-radius: 3px;
+  padding: 1px 4px;
+  margin-left: 4px;
+}
+.sp-line-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+  color: #c8e8ff;
+}
+.sp-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.sp-branch {
+  width: 100%;
+  padding-left: 13px;
+  font-size: 11px;
+  color: #7ab0cc;
+}
+
+/* ── Toast ─────────────────────────────────────────────────── */
+.scute-toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 99999;
+  background: rgba(8,18,40,0.95);
+  border: 1px solid rgba(0,180,255,0.35);
+  border-radius: 8px;
+  padding: 8px 18px;
+  color: #c8e8ff;
+  font-size: 13px;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  pointer-events: none;
+  animation: scute-in 0.25s ease, scute-out 0.4s 3.1s forwards;
+}
+@keyframes scute-in  { from { opacity:0; transform:translateX(-50%) translateY(10px); } }
+@keyframes scute-out { to   { opacity:0; } }
+
+/* ══════════════════════════════════════════════════════════════
+   Scute++ Dark Mode  — applied when <body> has .scute-dark
+   Overrides Leaflet's default white/grey UI
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Leaflet controls (zoom bar, layer toggle button) ── */
+body.scute-dark .leaflet-bar,
+body.scute-dark .leaflet-control-layers {
+  background: #111820 !important;
+  border-color: #2a3a50 !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.7) !important;
+}
+
+body.scute-dark .leaflet-bar a,
+body.scute-dark .leaflet-bar a:hover {
+  background-color: #111820 !important;
+  border-bottom-color: #2a3a50 !important;
+  color: #a0c8e8 !important;
+}
+body.scute-dark .leaflet-bar a:hover {
+  background-color: #1e2e42 !important;
+}
+body.scute-dark .leaflet-bar a.leaflet-disabled {
+  background-color: #0d1520 !important;
+  color: #3a5068 !important;
+}
+
+/* ── Layer control expanded panel ── */
+body.scute-dark .leaflet-control-layers-expanded {
+  background: #111820 !important;
+  color: #a0c8e8 !important;
+  border: 1px solid #2a3a50 !important;
+}
+body.scute-dark .leaflet-control-layers label {
+  color: #a0c8e8 !important;
+}
+body.scute-dark .leaflet-control-layers-separator {
+  border-top-color: #2a3a50 !important;
+}
+
+/* ── Leaflet popups ── */
+body.scute-dark .leaflet-popup-content-wrapper {
+  background: #111820 !important;
+  color: #a0c8e8 !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.6) !important;
+  border: 1px solid #2a3a50 !important;
+}
+body.scute-dark .leaflet-popup-tip {
+  background: #111820 !important;
+}
+body.scute-dark .leaflet-container a.leaflet-popup-close-button {
+  color: #5a8aaa !important;
+}
+
+/* ── Leaflet attribution ── */
+body.scute-dark .leaflet-control-attribution {
+  background: rgba(10, 18, 30, 0.85) !important;
+  color: #4a6a88 !important;
+}
+body.scute-dark .leaflet-control-attribution a {
+  color: #3a7aaa !important;
+}
+
+/* ── Leaflet tooltips ── */
+body.scute-dark .leaflet-tooltip {
+  background: #111820 !important;
+  border-color: #2a3a50 !important;
+  color: #a0c8e8 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5) !important;
+}
+body.scute-dark .leaflet-tooltip-top:before    { border-top-color:    #2a3a50 !important; }
+body.scute-dark .leaflet-tooltip-bottom:before { border-bottom-color: #2a3a50 !important; }
+body.scute-dark .leaflet-tooltip-left:before   { border-left-color:   #2a3a50 !important; }
+body.scute-dark .leaflet-tooltip-right:before  { border-right-color:  #2a3a50 !important; }
+
+/* ── Dynmap sidebar / UI panels ── */
+body.scute-dark #map,
+body.scute-dark .dynmap {
+  background: #0a1018 !important;
+}
+body.scute-dark #mcmap,
+body.scute-dark .leaflet-container {
+  background: #0a1018 !important;
+}
+
+/* Dynmap's own control panels */
+body.scute-dark #sidebarbox,
+body.scute-dark #login-userinfo,
+body.scute-dark .dynmap-control,
+body.scute-dark .dynmap-sidebar,
+body.scute-dark #bottom-bar,
+body.scute-dark #map-info {
+  background: #0e1620 !important;
+  color: #a0c8e8 !important;
+  border-color: #2a3a50 !important;
+}
+
+/* Coord control */
+body.scute-dark .coord-control {
+  background: rgba(10, 16, 28, 0.88) !important;
+  color: #7ab0cc !important;
+  border: 1px solid #1e3048 !important;
+  border-radius: 5px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
+}
+body.scute-dark .coord-control-label {
+  color: #4a7090 !important;
+}
+body.scute-dark .coord-control-value {
+  color: #a0d0f0 !important;
+}
+
+/* Any remaining white leaflet panels */
+body.scute-dark .leaflet-control {
+  color: #a0c8e8 !important;
+}
+
+/* Zoom box selection rect */
+body.scute-dark .leaflet-zoom-box {
+  background: rgba(0, 120, 200, 0.15) !important;
+  border-color: #00aaff !important;
+}
+
+/* Dark mode checkbox transition */
+body.scute-dark * {
+  transition: background-color 0.25s, color 0.15s, border-color 0.15s;
+}
+
+/* ── Locate Control ─────────────────────────────────────────────────────── */
+.scute-locate-wrap {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 12px;
+  background: #fff;
+  border: 2px solid rgba(0,0,0,0.2);
+  border-radius: 8px;
+  padding: 8px 10px;
+  min-width: 200px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+  color: #333;
+  position: relative;
+}
+body.scute-dark .scute-locate-wrap {
+  background: rgba(8, 18, 40, 0.93);
+  border-color: rgba(0, 180, 255, 0.3);
+  color: #c8e8ff;
+  box-shadow: 0 3px 16px rgba(0,100,200,0.2);
+}
+.scute-locate-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #555;
+  margin-bottom: 6px;
+  text-align: center;
+}
+body.scute-dark .scute-locate-title {
+  color: #00d4ff;
+}
+.scute-locate-row {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  margin-bottom: 5px;
+}
+.scute-locate-select {
+  background: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  color: #333;
+  font-size: 11px;
+  padding: 3px 4px;
+  cursor: pointer;
+  outline: none;
+  flex-shrink: 0;
+}
+body.scute-dark .scute-locate-select {
+  background: rgba(0,40,80,0.6);
+  border-color: rgba(0,180,255,0.3);
+  color: #c8e8ff;
+}
+.scute-locate-input-wrap {
+  position: relative;
+  flex: 1;
+}
+.scute-locate-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  color: #333;
+  font-size: 12px;
+  padding: 3px 6px;
+  outline: none;
+  font-family: inherit;
+}
+.scute-locate-input:focus {
+  border-color: #0080cc;
+}
+body.scute-dark .scute-locate-input {
+  background: rgba(0,40,80,0.6);
+  border-color: rgba(0,180,255,0.3);
+  color: #c8e8ff;
+}
+body.scute-dark .scute-locate-input:focus {
+  border-color: #00d4ff;
+}
+.scute-locate-input::placeholder {
+  color: #aaa;
+}
+body.scute-dark .scute-locate-input::placeholder {
+  color: #4a7090;
+}
+.scute-locate-suggestions {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 99999;
+  max-height: 160px;
+  overflow-y: auto;
+}
+body.scute-dark .scute-locate-suggestions {
+  background: #0d1e36;
+  border-color: rgba(0,180,255,0.3);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+.scute-sug-item {
+  padding: 5px 8px;
+  cursor: pointer;
+  font-size: 12px;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+body.scute-dark .scute-sug-item {
+  color: #c8e8ff;
+}
+.scute-sug-item:hover,
+.scute-sug-active {
+  background: rgba(0,130,220,0.12);
+  color: #0080cc;
+}
+body.scute-dark .scute-sug-item:hover,
+body.scute-dark .scute-sug-active {
+  background: rgba(0,180,255,0.1);
+  color: #00d4ff;
+}
+.scute-locate-btn {
+  width: 100%;
+  background: #0080cc;
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 12px;
+  font-family: inherit;
+  font-weight: 600;
+  padding: 5px 0;
+  cursor: pointer;
+  transition: background 0.15s;
+  letter-spacing: 0.03em;
+}
+.scute-locate-btn:hover { background: #006aaa; }
+body.scute-dark .scute-locate-btn {
+  background: rgba(0,180,255,0.2);
+  border: 1px solid rgba(0,180,255,0.4);
+  color: #00d4ff;
+}
+body.scute-dark .scute-locate-btn:hover {
+  background: rgba(0,180,255,0.32);
+}
+.scute-locate-error {
+  font-size: 11px;
+  color: #cc3333;
+  margin-bottom: 4px;
+  text-align: center;
+}
+body.scute-dark .scute-locate-error {
+  color: #ff6b6b;
+}
+
+/* ── Chunk grid recolor (always black) ─────────────────────── */
+.leaflet-overlay-pane path[stroke="#ff0000"],
+.leaflet-overlay-pane path[stroke="#FF0000"],
+.leaflet-overlay-pane path[stroke="red"],
+.leaflet-overlay-pane path[stroke="#f00"] {
+  stroke: #1a1a1a !important;
+  stroke-opacity: 0.55 !important;
+}
