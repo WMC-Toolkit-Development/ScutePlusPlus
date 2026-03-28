@@ -646,7 +646,7 @@ LOG('locate: towns:', _towns.length, '  nations:', _nations.length);
       L.DomEvent.disableClickPropagation(wrap);
       L.DomEvent.disableScrollPropagation(wrap);
       wrap.innerHTML = `
-        <div class="scute-locate-title">🔍 Locate</div>
+        <div class="scute-locate-title">Locate</div>
         <div class="scute-locate-row">
           <select id="scute-locate-type" class="scute-locate-select">
             <option value="town">Town</option>
