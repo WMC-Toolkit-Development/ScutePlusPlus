@@ -9,16 +9,17 @@
     if (e.data.type === 'SET_DARK_MODE')
       chrome.storage.local.set({ darkModeEnabled: e.data.enabled });
 
-    if (e.data.type === 'PAGE_READY') {
-      chrome.storage.local.get(['iceHighwaysEnabled', 'darkModeEnabled'], (result) => {
-        const darkOn = result.darkModeEnabled === undefined ? true : !!result.darkModeEnabled;
-        window.postMessage({
-          source: 'scute-ext', type: 'INIT',
-          iceHighwaysEnabled: !!result.iceHighwaysEnabled,
-          darkModeEnabled: darkOn,
-        }, '*');
-      });
-    }
+if (e.data.type === 'PAGE_READY') {
+  chrome.storage.local.get(['iceHighwaysEnabled', 'darkModeEnabled'], (result) => {
+    const darkOn = result.darkModeEnabled === undefined ? true : !!result.darkModeEnabled;
+    window.postMessage({
+      source: 'scute-ext', type: 'INIT',
+      iceHighwaysEnabled: !!result.iceHighwaysEnabled,
+      darkModeEnabled: darkOn,
+      capitalUrl: chrome.runtime.getURL('capital.webp'),  // ← this line
+    }, '*');
+  });
+}
   });
 
   chrome.runtime.onMessage.addListener((msg) => {

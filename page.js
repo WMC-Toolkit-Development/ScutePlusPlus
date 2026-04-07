@@ -187,11 +187,12 @@
   }
 
   // ── State ─────────────────────────────────────────────────────────────────
-  let highwayLayer = null;
-  let highwayData  = null;
-  let _map         = null;
-  let _proj        = null;
-  let _darkMode    = false;
+  let highwayLayer   = null;
+  let highwayData    = null;
+  let _map           = null;
+  let _proj          = null;
+  let _darkMode      = false;
+  let _townyInitDone = false;
 
   async function enable() {
     setSpinner(true);
@@ -308,6 +309,12 @@
     if (e.source !== window || !e.data || e.data.source !== 'scute-ext') return;
 
     if (e.data.type === 'INIT') {
+      // Towny icons — capitalUrl comes from content.js since chrome.runtime
+      // is not available in the MAIN world where page.js runs
+      if (e.data.capitalUrl && _map && !_townyInitDone) {
+        _townyInitDone = true;
+        try { initTownyIcons(_map, e.data.capitalUrl); } catch (err) { ERR('towny icons:', err); }
+      }
       if (e.data.iceHighwaysEnabled && _map) {
         const cb = document.getElementById('scute-ice-cb');
         if (cb) cb.checked = true;
@@ -533,19 +540,78 @@
     }, 2000);
   }
 
+  // ── Towny Icon Replacer ───────────────────────────────────────────────────
+  // CAPITAL_SRC passed in from content.js — chrome.runtime unavailable in MAIN world
+  function initTownyIcons(map, CAPITAL_SRC) {
+    function iconSize(zoom) {
+      return Math.min(28, Math.max(10, 10 + zoom * 3));
+    }
+
+    function processMarker(img) {
+      if (img.dataset.scuteProcessed) return;
+      img.dataset.scuteProcessed = '1';
+      const src = img.getAttribute('src') || '';
+
+      if (src.includes('towny_town_icon')) {
+        img.style.setProperty('display', 'none', 'important');
+        return;
+      }
+
+      if (src.includes('towny_capital_icon')) {
+        const z  = map.getZoom() ?? 2;
+        const sz = iconSize(z);
+        img.src              = CAPITAL_SRC;
+        img.style.width      = sz + 'px';
+        img.style.height     = sz + 'px';
+        img.style.marginLeft = (-sz / 2) + 'px';
+        img.style.marginTop  = (-sz / 2) + 'px';
+        img.dataset.scuteCapital = '1';
+      }
+    }
+
+    function rescaleCapitals() {
+      const z  = map.getZoom() ?? 2;
+      const sz = iconSize(z);
+      document.querySelectorAll('img[data-scute-capital="1"]').forEach(img => {
+        img.style.width      = sz + 'px';
+        img.style.height     = sz + 'px';
+        img.style.marginLeft = (-sz / 2) + 'px';
+        img.style.marginTop  = (-sz / 2) + 'px';
+      });
+    }
+
+    function scanAll() {
+      document.querySelectorAll('img.leaflet-marker-icon').forEach(processMarker);
+    }
+
+    const obs = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        for (const node of m.addedNodes) {
+          if (node.nodeType !== 1) continue;
+          if (node.matches?.('img.leaflet-marker-icon')) processMarker(node);
+          node.querySelectorAll?.('img.leaflet-marker-icon').forEach(processMarker);
+        }
+      }
+    });
+    obs.observe(document.body, { childList: true, subtree: true });
+
+    map.on('zoomend', rescaleCapitals);
+    scanAll();
+    LOG('towny icon replacer active ✓');
+  }
+
   // ── Locate Control ────────────────────────────────────────────────────────
   function initLocate(map) {
     const L = window.L;
     let _towns   = [];
     let _nations = [];
 
-    // ── Helper: extract name from a marker using every known field ──────────
     function markerName(marker) {
       const raw =
-        marker.tooltip ||
-        marker.title   ||
-        marker.name    ||
-        marker.label   ||
+        marker.tooltip          ||
+        marker.title            ||
+        marker.name             ||
+        marker.label            ||
         marker.options?.tooltip ||
         marker.options?.title   ||
         marker.options?.label   ||
@@ -553,24 +619,19 @@
       return raw.replace(/<[^>]+>/g, '').trim();
     }
 
-    // ── Helper: extract popup html from a marker ───────────────────────────
     function markerPopup(marker) {
       return marker.popup || marker.options?.popup || marker.content || '';
     }
 
-    // ── Helper: flatten a points structure to [{x,z}] ────────────────────
     function flattenPoints(pts) {
       if (!pts || !pts.length) return [];
-      // [[{x,z},...]] — ring wrapped in array
       if (Array.isArray(pts[0]) && pts[0].length && typeof pts[0][0] === 'object') pts = pts[0];
-      // [{x,z}] or [{lat,lng}] or [[x,z]]
       return pts.map(p => {
         if (Array.isArray(p)) return { x: p[0], z: p[1] };
         return { x: p.x ?? p.lng ?? 0, z: p.z ?? p.lat ?? 0 };
       }).filter(p => p.x != null && p.z != null);
     }
 
-    // ── Helper: centroid of points ────────────────────────────────────────
     function centroid(pts) {
       const valid = flattenPoints(pts);
       if (!valid.length) return null;
@@ -598,7 +659,6 @@
           const r = await fetch(url);
           if (!r.ok) { LOG('locate:', url, '→ HTTP', r.status); continue; }
           const j = await r.json();
-          // Dump raw structure so we can debug if still broken
           LOG('locate: raw response type:', Array.isArray(j) ? 'array[' + j.length + ']' : typeof j);
           if (Array.isArray(j) && j.length) {
             LOG('locate: layer[0] keys:', Object.keys(j[0]).join(', '));
@@ -624,68 +684,64 @@
       const nationAcc = {};
 
       for (const layer of data) {
-        // Markers may be in layer.markers or layer.data or layer itself if it's an array
         const markerList = layer.markers || layer.data || (Array.isArray(layer) ? layer : []);
         LOG('locate: layer', layer.key || layer.id || layer.label || '?',
             '| marker count:', markerList.length,
             '| first marker keys:', markerList[0] ? Object.keys(markerList[0]).join(', ') : 'none');
 
         for (const marker of markerList) {
-          const type    = (marker.type || marker.shape || marker.markerType || '').toLowerCase();
-          const name    = markerName(marker);
-          const popup   = markerPopup(marker);
+          const type  = (marker.type || marker.shape || marker.markerType || '').toLowerCase();
+          const name  = markerName(marker);
+          const popup = markerPopup(marker);
 
           if (!name) continue;
-          const tk = name.toLowerCase();
 
-          // ── Point / icon / dot → town ──────────────────────────────────
- if (type === 'icon' || type === 'dot' || type === 'marker'
-    || type === 'pin' || type === 'circle') {
-  const x = marker.point?.x ?? marker.x ?? marker.location?.x;
-  const z = marker.point?.z ?? marker.z ?? marker.location?.z
-         ?? marker.point?.y ?? marker.y;
-  if (x == null || z == null) continue;
-  const nx = +x, nz = +z;
-  if (isNaN(nx) || isNaN(nz)) continue;
+          // ── Point / icon → town + nation from "(NationName)" suffix ──────
+          if (type === 'icon' || type === 'dot' || type === 'marker'
+              || type === 'pin' || type === 'circle') {
+            const x = marker.point?.x ?? marker.x ?? marker.location?.x;
+            const z = marker.point?.z ?? marker.z ?? marker.location?.z ?? marker.point?.y ?? marker.y;
+            if (x == null || z == null) continue;
+            const nx = +x, nz = +z;
+            if (isNaN(nx) || isNaN(nz)) continue;
 
-  // Town name is everything before the " (NationName)" suffix
-  // e.g. "Bornholm (Poland)" → town: "Bornholm", nation: "Poland"
-  const nationMatch = name.match(/^(.+?)\s*\(([^)]+)\)\s*$/);
-  const townName   = nationMatch ? nationMatch[1].trim() : name;
-  const nationName = nationMatch ? nationMatch[2].trim() : null;
+            // "Bornholm (Poland)" → town: "Bornholm", nation: "Poland"
+            const nm       = name.match(/^(.+?)\s*\(([^)]+)\)\s*$/);
+            const townName = nm ? nm[1].trim() : name;
+            const natName  = nm ? nm[2].trim() : null;
 
-  const tk = townName.toLowerCase();
-  if (!townMap[tk]) townMap[tk] = { name: townName, x: nx, z: nz };
+            const tk = townName.toLowerCase();
+            if (!townMap[tk]) townMap[tk] = { name: townName, x: nx, z: nz };
 
-  if (nationName) {
-    const nk = nationName.toLowerCase();
-    if (!nationAcc[nk]) nationAcc[nk] = { name: nationName, xs: [], zs: [] };
-    nationAcc[nk].xs.push(nx);
-    nationAcc[nk].zs.push(nz);
-  }
-}
+            if (natName) {
+              const nk = natName.toLowerCase();
+              if (!nationAcc[nk]) nationAcc[nk] = { name: natName, xs: [], zs: [] };
+              nationAcc[nk].xs.push(nx);
+              nationAcc[nk].zs.push(nz);
+            }
+          }
 
-          // ── Polygon / rectangle / region → town + maybe nation ─────────
+          // ── Polygon / rectangle → town + maybe nation from popup ──────────
           if (type === 'polygon' || type === 'rectangle'
               || type === 'multipolygon' || type === 'region' || type === 'fill') {
-            // multipolygon: points[0][0] is the outer ring
             let rawPts = marker.points || marker.vertices || [];
             if (type === 'multipolygon') {
               rawPts = marker.points?.[0]?.[0] || marker.points?.[0] || rawPts;
             }
-  const c = centroid(rawPts);
-if (!c || isNaN(c.x) || isNaN(c.z)) continue; // ← add isNaN checks
-if (!townMap[tk]) townMap[tk] = { name, x: c.x, z: c.z };
+            const c = centroid(rawPts);
+            if (!c || isNaN(c.x) || isNaN(c.z)) continue;
 
-            // Nation from popup
-            const nm =
+            const tk = name.toLowerCase();
+            if (!townMap[tk]) townMap[tk] = { name, x: c.x, z: c.z };
+
+            const pm =
               popup.match(/[Nn]ation[^:]*:\s*<[^>]+>([^<]+)</) ||
               popup.match(/[Nn]ation[^:]*:\s*([^\n<,]+)/)       ||
               popup.match(/\(([^)]+)\)/);
-            if (nm) {
-              const nationName = nm[1].trim();
-              const nk = nationName.toLowerCase();
-              if (!nationAcc[nk]) nationAcc[nk] = { name: nationName, xs: [], zs: [] };
+            if (pm) {
+              const natName = pm[1].trim();
+              const nk = natName.toLowerCase();
+              if (!nationAcc[nk]) nationAcc[nk] = { name: natName, xs: [], zs: [] };
               nationAcc[nk].xs.push(c.x);
               nationAcc[nk].zs.push(c.z);
             }
@@ -693,7 +749,6 @@ if (!townMap[tk]) townMap[tk] = { name, x: c.x, z: c.z };
         }
       }
 
-      // Average nation centroids
       const nationMap = {};
       for (const [k, v] of Object.entries(nationAcc)) {
         nationMap[k] = {
@@ -779,23 +834,23 @@ if (!townMap[tk]) townMap[tk] = { name, x: c.x, z: c.z };
         setTimeout(() => { errorEl.style.display = 'none'; }, 3000);
       }
 
-function doLocate() {
-  const q = inputEl.value.trim();
-  if (!q) return;
-  const qn   = norm(q);
-  const list = getList();
-  const match =
-    list.find(t => t.name.toLowerCase() === q.toLowerCase()) ||
-    list.find(t => norm(t.name) === qn)                      ||
-    list.find(t => norm(t.name).startsWith(qn))              ||
-    list.find(t => norm(t.name).includes(qn));
-  if (!match) { showError(`❌ "${q}" not found`); return; }
-  if (isNaN(match.x) || isNaN(match.z)) { showError(`❌ No coordinates for "${match.name}"`); return; } // ← add
-  const ll   = _proj.toLatLng(match.x, match.z);
-  const zoom = typeEl.value === 'nation' ? 2 : Math.max(map.getZoom(), 5);
-  map.setView(ll, zoom, { animate: true });
-  hideSug(); errorEl.style.display = 'none';
-}
+      function doLocate() {
+        const q = inputEl.value.trim();
+        if (!q) return;
+        const qn   = norm(q);
+        const list = getList();
+        const match =
+          list.find(t => t.name.toLowerCase() === q.toLowerCase()) ||
+          list.find(t => norm(t.name) === qn)                      ||
+          list.find(t => norm(t.name).startsWith(qn))              ||
+          list.find(t => norm(t.name).includes(qn));
+        if (!match) { showError(`❌ "${q}" not found`); return; }
+        if (isNaN(match.x) || isNaN(match.z)) { showError(`❌ No coordinates for "${match.name}"`); return; }
+        const ll   = _proj.toLatLng(match.x, match.z);
+        const zoom = typeEl.value === 'nation' ? 2 : Math.max(map.getZoom(), 5);
+        map.setView(ll, zoom, { animate: true });
+        hideSug(); errorEl.style.display = 'none';
+      }
 
       inputEl.addEventListener('input', () => {
         const q = norm(inputEl.value);
@@ -841,6 +896,8 @@ function doLocate() {
     initCopyLocation(map);
     initChunkRecolor(map);
     initLocate(map);
+    // Note: initTownyIcons is called from the INIT message handler
+    // because chrome.runtime.getURL is not available in the MAIN world
 
     waitForOverlayDiv((overlayDiv) => {
       injectRow(overlayDiv);
